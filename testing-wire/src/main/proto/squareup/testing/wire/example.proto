@@ -1,0 +1,16 @@
+syntax = "proto2";
+// Basic proto for testing Wire integration.
+
+package squareup.testing.wire;
+
+option java_package = "com.squareup.testing.wire";
+option java_generic_services = true;
+
+message Data {
+  optional string string = 1;
+  repeated string values = 2;
+}
+
+message DataWithByteString {
+  repeated bytes values = 1;
+}

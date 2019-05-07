@@ -1,0 +1,45 @@
+syntax = "proto2";
+
+// Proto file used for testing gRPC integration with service container.
+
+package squareup.testing;
+
+option java_package = "com.squareup.protos.testing";
+option java_generic_services = true;
+
+import "squareup/common/messages.proto";
+import "squareup/sake/options.proto";
+
+message GrpcInteropRequest {
+  /** If true, the error will be a server error, otherwise client. */
+  optional bool server_error = 1;
+
+  /** If set, response of the action will be delated by given ammount of milliseconds. */
+  optional int64 delay_ms = 2;
+}
+
+message GrpcInteropResponse {
+  optional string sidechannel_message = 1;
+}
+
+message EchoRequest {
+  optional string message = 1;
+}
+
+message EchoResponse {
+  optional string message = 2;
+}
+
+/** An example service. */
+service GrpcInteropService {
+  /** Prints a messages passed in sidechannel */
+  rpc SidechannelMessage (squareup.common.messages.Empty) returns (GrpcInteropResponse);
+
+  /** Throws an error. */
+  rpc ThrowError (GrpcInteropRequest) returns (squareup.common.messages.Empty);
+
+  /** Returns response after delay */
+  rpc DelayedAction (GrpcInteropRequest) returns (squareup.common.messages.Empty);
+
+  rpc Echo (EchoRequest) returns (EchoResponse);
+}

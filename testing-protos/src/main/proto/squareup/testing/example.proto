@@ -1,0 +1,190 @@
+syntax = "proto2";
+// Copyright 2012, Square Inc.
+
+// Example proto file generally used for testing RPC behavior.
+
+package squareup.testing;
+
+option java_package = "com.squareup.protos.testing";
+option java_generic_services = true;
+
+import "squareup/common/messages.proto";
+import "squareup/common/validation.proto";
+import "squareup/sake/options.proto";
+import "squareup/multipass/options.proto";
+import "squareup/json/options.proto";
+
+/** Union data type. */
+message Data {
+  reserved "reserved_field";
+  reserved 42;
+
+  enum Cardinal {
+    ZERO = 0;
+    ONE = 1;
+    TWO = 2;
+    THREE = 3;
+    FOUR = 4;
+    FIVE = 5;
+  }
+
+  optional int32 int = 1;
+
+  optional float float = 2;
+
+  optional string string = 3;
+
+  optional bool boolean = 4;
+
+  optional bytes raw_data = 5;
+
+  repeated string array = 6;
+
+  // Some fields with nonstandard defaults.
+  optional int32 seven = 7 [default = 7];
+  optional float one_half = 8 [default = 0.5];
+  optional string example = 9 [default = "example"];
+  optional bool default_to_true = 10 [default = true];
+
+  // Another nested message
+  optional NestedData nested_data = 11;
+
+  optional Cardinal count = 12 [default = THREE];
+
+  optional int64 long = 13;
+
+  optional uint32 uint = 14;
+
+  optional uint64 ulong = 15;
+
+  repeated Cardinal repeated_enum = 16;
+
+  map<string, int32> map_of_ints = 17;
+  map<string, string> map_of_strings = 18;
+  map<string, Cardinal> map_of_enums = 19;
+  map<string, NestedData> map_of_messages = 20;
+  map<int32, int32> invalid_map_key_type = 21;
+
+  oneof only_one {
+    string one_string = 22;
+    NestedData one_nested_data = 23;
+  }
+  
+  extensions 100 to 200;
+}
+
+message NestedData {
+  optional string nested = 1;
+}
+
+message MoreData {
+  optional string name = 1;
+}
+
+extend Data {
+  optional MoreData more_data = 100;
+
+  optional string comment = 101;
+
+  optional string with_json_name = 102 [
+    (squareup.json.extension_json_name) = "overridden_json_name"
+  ];
+}
+
+message SendDataRequest {
+  optional Data data = 1 [(squareup.validation.required) = true];
+}
+
+message SendDataResponse {
+  optional Data data = 1 [(squareup.validation.required) = true];
+}
+
+message PrintMessageRequest {
+  optional string message = 1 [(squareup.validation.not_empty) = true];
+}
+
+message MultipassPrintRequest {}
+
+message MultipassPrintResponse {
+  optional string session_token = 1 [(squareup.validation.required) = true];
+}
+
+message ThrowErrorRequest {
+  /** If true, the error will be a server error, otherwise client. */
+  optional bool server_error = 1;
+
+  optional int32 error_code = 2;
+
+  optional string message = 3;
+}
+
+message WaitRequest {
+  /** Number of milliseconds to wait. */
+  optional int64 milliseconds = 1;
+}
+
+message RetryRequest {
+  /**
+   * Uniquely identify one retry test attempt. Each test case should test a random string here
+   * to avoid interference with other test cases
+   */
+  optional string request_token = 1;
+
+  /**
+   * RPC handler returns an error response until a client sends this number of requests.
+   */
+  optional int32 num_retries = 2;
+}
+
+message TestSideChannel {
+  optional string value = 1;
+}
+
+message CheckFeatureRequest {
+  optional string token = 1;
+}
+
+message CheckFeatureResponse {
+  optional string message = 1;
+}
+
+/** An example service. */
+service ExampleService {
+  /** Sends some data. */
+  rpc SendData (SendDataRequest) returns (SendDataResponse) {
+    // an example for setting a default timeout
+    option (squareup.sake.timeout) = 10.0;
+    // an example for setting a retry timeout
+    option (squareup.sake.retry_timeout_millis) = 2000;
+    // an example for marking a method as accepting credentials
+    option (squareup.multipass.credentials) = OPTIONAL;
+    // an example for defining permissions needed for methods that accept credentials
+    option (squareup.multipass.permissions) = { value: [READ, WRITE] };
+    // an example for defining that a method is idempotent and can safely be retried on 5xx errors
+    option (squareup.sake.idempotent) = true;
+  }
+
+  /** Prints a message on the server. */
+  rpc PrintMessage (PrintMessageRequest) returns (squareup.common.messages.Empty);
+
+  /** Prints multipass information from the user */
+  rpc MultipassPrint (MultipassPrintRequest) returns (MultipassPrintResponse) {
+    option (squareup.multipass.credentials) = REQUIRED;
+  }
+
+  /** Throws an error. */
+  rpc ThrowError (ThrowErrorRequest) returns (squareup.common.messages.Empty);
+
+  /** Waits for a specified amount of time before responding. */
+  rpc Wait (WaitRequest) returns (squareup.common.messages.Empty);
+
+  /**
+   * Returns an error response until a request is retried for specified time.s
+   */
+  rpc Retry (RetryRequest) returns (squareup.common.messages.Empty) {
+    option (squareup.sake.idempotent) = true;
+  }
+
+  /** Check a feature flag */
+  rpc CheckFeature (CheckFeatureRequest) returns (CheckFeatureResponse);
+}

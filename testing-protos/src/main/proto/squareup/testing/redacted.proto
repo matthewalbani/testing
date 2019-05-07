@@ -1,0 +1,51 @@
+syntax = "proto2";
+// Copyright 2012, Square Inc.
+
+// Example proto file used for testing redacted behavior.
+
+package squareup.testing;
+
+option java_package = "com.squareup.protos.testing";
+option java_generic_services = true;
+
+import "squareup/common/pii.proto";
+
+message FakeCardData {
+  optional string cvv = 1 [(squareup.redacted) = true];
+
+  optional string track_data = 2 [(squareup.redacted) = true];
+
+  optional string expiration = 3 [(squareup.redacted) = true];
+}
+
+message FakeUserData {
+  optional int32 user_id = 1;
+
+  optional string user_name = 2 [(squareup.redacted) = true];
+}
+
+message RedactedExample {
+  optional int32 redacted_int = 1 [(squareup.redacted) = true];
+
+  optional FakeCardData redacted_card_data = 2 [(squareup.redacted) = true];
+
+  repeated FakeUserData user_data = 3;
+
+  extensions 100 to 199;
+}
+
+extend RedactedExample {
+  optional string redacted_extension = 100 [(squareup.redacted) = true];
+  optional string merchant_name = 101;
+}
+
+message RedactedExt {
+  extend RedactedExample {
+    optional RedactedExt data = 110;
+    optional string redacted_nested = 111 [(squareup.redacted) = true];
+    optional string token = 112;
+  }
+
+  optional string redacted_complex = 1 [(squareup.redacted) = true];
+  optional int32 coupon_count = 2;
+}

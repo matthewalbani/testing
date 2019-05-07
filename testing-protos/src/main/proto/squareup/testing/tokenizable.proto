@@ -1,0 +1,28 @@
+syntax = "proto2";
+// Copyright 2014, Square Inc.
+
+// Example proto file used for testing tokenizable and redacted behavior.
+
+package squareup.testing;
+
+option java_package = "com.squareup.protos.testing";
+option java_generic_services = true;
+
+import "squareup/common/pii.proto";
+
+message TokenizableFakeUserData {
+  optional int32 user_id = 1;
+  optional string user_name = 2 [(squareup.redacted) = true];
+  optional string user_email = 3 [(squareup.redacted) = true,
+                                  (squareup.tokenizable) = true,
+                                  (squareup.normalization) = EMAIL];
+
+  optional string user_string1 = 4 [(squareup.tokenizable) = true,
+                                    (squareup.normalization) = DEFAULT];
+  optional string user_string2 = 5 [(squareup.tokenizable) = true];
+}
+
+message TokenizedAndRedactedExample {
+  optional int32 redacted_int = 1 [(squareup.redacted) = true];
+  repeated TokenizableFakeUserData user_data = 3;
+}

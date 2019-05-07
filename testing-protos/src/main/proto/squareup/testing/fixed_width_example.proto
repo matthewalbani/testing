@@ -1,0 +1,31 @@
+syntax = "proto2";
+// Copyright 2012, Square Inc.
+
+// Example proto file used to test the fixed width file parser
+// Used by FixedWidthProtoParserTest
+
+package squareup.testing;
+
+option java_package = "com.squareup.protos.testing";
+
+import "squareup/common/parser.proto";
+
+message BaseFixedWidth {
+	  optional string string = 1 [(squareup.common.parser.length) = 30];
+
+	  optional int32 int32 = 2 [(squareup.common.parser.length) = 5];
+
+	  optional int64 int64 = 3 [(squareup.common.parser.length) = 20];
+
+	  optional bool bool = 4 [(squareup.common.parser.length) = 1];
+
+      optional double double = 5 [(squareup.common.parser.length) = 10, (squareup.common.parser.decimal_places)=5];
+}
+
+message NestedMessage {
+	optional string string1 = 1 [(squareup.common.parser.length) = 5];
+
+	optional BaseFixedWidth basic = 2;
+	
+	optional string string2 = 3 [(squareup.common.parser.length) = 5];
+}

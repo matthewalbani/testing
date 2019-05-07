@@ -1,0 +1,310 @@
+syntax = "proto2";
+package squareup.testing;
+
+option java_package = "com.squareup.protos.testing";
+
+// all protos in this file exist only for tests in common/src/test/java/com/squareup/common/protobuf/diff
+
+message FakeMoney {
+  optional int64 amount = 2;
+
+
+  /**
+   * Character string repesenting ISO-4217 currency codes.
+   * @see http://www.currency-iso.org/dl_iso_table_a1.xml
+   */
+  optional FakeCurrencyCode currency_code = 3 [default = USD];
+}
+
+/**
+ * Represents an available tipping amount.
+ *
+ * Display tip options using the following guidelines:
+ *  - If there's a percentage, format it as a percentage and use that.
+ *  - Otherwise, show the formatted tip_money, omitting the cents if there are none ($1, not $1.00).
+ */
+message FakeTipOption {
+  /**
+   * Deprecated.
+   *
+   * Required, unlocalized, user-facing label for a tip option. May be a percentage or amount,
+   * for example "20%" or "$10". New clients should ignore this field and instead format tip options
+   * locally using percentage or tip_money.
+   */
+  optional string label = 1 [deprecated=true];
+
+  /** Required tip amount. */
+  optional FakeMoney tip_money_named_differently = 2;
+
+  /** Optional tip percentage. Only populated on tip options that were calculated as a percentage. */
+  optional double percentage = 3;
+
+  /** Required. Indicates whether this tip option matches the amount of money left on the user's balance. */
+  optional bool is_remaining_balance = 4;
+}
+
+/**
+ * Tipping preferences for a merchant.
+ *
+ * In addition to the restrictions specified on each field, to be considered valid at least one of the following must be true:
+ *  - tipping.tipping_options is non-empty.
+ *  - tipping.use_smart_tipping is true.
+ *  - allow_manual_tip_entry is true.
+ *
+ * See https://docs.google.com/a/squareup.com/document/d/19VNrjFmRB4is2FLb7Arx-NSBIj3Hb0hnuS48tiq1aLU/edit
+ */
+message FakeTippingPreferences {
+  /** Required. Specifies whether or not the merchant has enabled smart tipping. */
+  optional bool use_smart_tipping_named_differently = 1;
+
+  /**
+   * Optional. The threshold at which smart tipping switches from flat amounts to percentages. Above this
+   * threshold, the options from smart_tipping_over_threshold_options should be used. Below it, the options
+   * from smart_tipping_under_threshold_options should be used. Specified iff use_smart_tipping is true.
+   */
+  optional FakeMoney smart_tipping_threshold_money = 2;
+
+  /**
+   * Optional. The options the client should use for a transaction when smart tipping is enabled and the
+   * transaction total is below the smart tipping threshold. Not empty iff use_smart_tipping is true.
+   */
+  repeated FakeTipOption smart_tipping_under_threshold_options = 3;
+
+  /**
+   * Optional. The options the client should use for a transaction when smart tipping is enabled and the
+   * transaction total is above the smart tipping threshold. Not empty iff use_smart_tipping is true.
+   */
+  repeated FakeTipOption smart_tipping_over_threshold_options = 4;
+
+  /**
+   * Optional. The merchant-specified tipping options.
+   *  - Not specified if use_smart_tipping is true.
+   *  - Optionally specified if use_smart_tipping is false and allow_manual_tip_entry is true.
+   *  - Required if use_smart_tipping is false and allow_manual_tip_entry is false.
+   */
+  repeated FakeTipOption tipping_options = 5;
+
+  /** Required. Specifies whether or not the client allows arbitrary tip amounts to be entered by the buyer. */
+  optional bool allow_manual_tip_entry = 6;
+
+  /**
+   * Optional. The smallest possible maximum custom tip. Specified iff allow_manual_tip_entry is true.
+   */
+  optional FakeMoney manual_tip_entry_smallest_max_money = 7;
+
+  /**
+   * Optional. The largest possible maximum custom tip. Specified iff allow_manual_tip_entry is true.
+   *
+   * A maximum custom tip should never exceed the min of:
+   *   - manual_tip_entry_largest_max_money
+   *   - manual_tip_entry_max_percentage of the transaction total
+   */
+  optional FakeMoney manual_tip_entry_largest_max_money = 8;
+
+  /**
+   * Optional. The maximum percentage of a transaction total that a custom tip can be. For example, a
+   * value of 100 means a custom tip on an amount greater than manual_tip_entry_smallest_max_amount may not
+   * exceed 100% of the transaction total. Specified iff allow_manual_tip_entry is true.
+   */
+  optional double manual_tip_entry_max_percentage = 9;
+
+  /**
+   * Set if tipping option values were calculated on the client and shown to the buyer.
+   * Can be used to reconstruct values without re-running calcualations, for
+   * example this is used in paper sig for the quick settle feature.
+   *
+   * This is essentially a log entry, and should only be set once.
+   *
+   * Tip options should be displayed to the user in the order of the TipOption array.
+   */
+  repeated FakeTipOption client_calculated_tip_option = 10;
+}
+
+/**
+ * ISO-4217 Currency Codes
+ * http://www.currency-iso.org/dl_iso_table_a1.xml
+ * Names are the alpha-3 code, ordinals are the numeric code.
+ */
+enum FakeCurrencyCode {
+  AED = 784;
+AFN = 971;
+ALL = 8;
+AMD = 51;
+ANG = 532;
+AOA = 973;
+ARS = 32;
+AUD = 36;
+AWG = 533;
+AZN = 944;
+BAM = 977;
+BBD = 52;
+BDT = 50;
+BGN = 975;
+BHD = 48;
+BIF = 108;
+BMD = 60;
+BND = 96;
+BOB = 68;
+BOV = 984;
+BRL = 986;
+BSD = 44;
+BTN = 64;
+BWP = 72;
+BYR = 974;
+BZD = 84;
+CAD = 124;
+CDF = 976;
+CHE = 947;
+CHF = 756;
+CHW = 948;
+CLF = 990;
+CLP = 152;
+CNY = 156;
+COP = 170;
+COU = 970;
+CRC = 188;
+CUC = 931;
+CUP = 192;
+CVE = 132;
+CZK = 203;
+DJF = 262;
+DKK = 208;
+DOP = 214;
+DZD = 12;
+EGP = 818;
+ERN = 232;
+ETB = 230;
+EUR = 978;
+FJD = 242;
+FKP = 238;
+GBP = 826;
+GEL = 981;
+GHS = 936;
+GIP = 292;
+GMD = 270;
+GNF = 324;
+GTQ = 320;
+GYD = 328;
+HKD = 344;
+HNL = 340;
+HRK = 191;
+HTG = 332;
+HUF = 348;
+IDR = 360;
+ILS = 376;
+INR = 356;
+IQD = 368;
+IRR = 364;
+ISK = 352;
+JMD = 388;
+JOD = 400;
+JPY = 392;
+KES = 404;
+KGS = 417;
+KHR = 116;
+KMF = 174;
+KPW = 408;
+KRW = 410;
+KWD = 414;
+KYD = 136;
+KZT = 398;
+LAK = 418;
+LBP = 422;
+LKR = 144;
+LRD = 430;
+LSL = 426;
+LTL = 440;
+LVL = 428;
+LYD = 434;
+MAD = 504;
+MDL = 498;
+MGA = 969;
+MKD = 807;
+MMK = 104;
+MNT = 496;
+MOP = 446;
+MRO = 478;
+MUR = 480;
+MVR = 462;
+MWK = 454;
+MXN = 484;
+MXV = 979;
+MYR = 458;
+MZN = 943;
+NAD = 516;
+NGN = 566;
+NIO = 558;
+NOK = 578;
+NPR = 524;
+NZD = 554;
+OMR = 512;
+PAB = 590;
+PEN = 604;
+PGK = 598;
+PHP = 608;
+PKR = 586;
+PLN = 985;
+PYG = 600;
+QAR = 634;
+RON = 946;
+RSD = 941;
+RUB = 643;
+RWF = 646;
+SAR = 682;
+SBD = 90;
+SCR = 690;
+SDG = 938;
+SEK = 752;
+SGD = 702;
+SHP = 654;
+SLL = 694;
+SOS = 706;
+SRD = 968;
+SSP = 728;
+STD = 678;
+SVC = 222;
+SYP = 760;
+SZL = 748;
+THB = 764;
+TJS = 972;
+TMT = 934;
+TND = 788;
+TOP = 776;
+TRY = 949;
+TTD = 780;
+TWD = 901;
+TZS = 834;
+UAH = 980;
+UGX = 800;
+USD = 840;
+USN = 997;
+USS = 998;
+UYI = 940;
+UYU = 858;
+UZS = 860;
+VEF = 937;
+VND = 704;
+VUV = 548;
+WST = 882;
+XAF = 950;
+XAG = 961;
+XAU = 959;
+XBA = 955;
+XBB = 956;
+XBC = 957;
+XBD = 958;
+XCD = 951;
+XDR = 960;
+XOF = 952;
+XPD = 964;
+XPF = 953;
+XPT = 962;
+XTS = 963;
+XXX = 999;
+YER = 886;
+ZAR = 710;
+ZMK = 894;
+ZMW = 967;
+// Currency codes not currently in ISO-4217:
+BTC = 1001;
+}
